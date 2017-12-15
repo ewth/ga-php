@@ -68,7 +68,7 @@ class GoogleAnalytics
      * @param array $productVariant
      * @param array $productPosition
      */
-    public function purchase($clientId, $transactionId, $affiliation, $revenue, $tax, $shipping, $coupon, $productId, $productName, $productCategory, $productBrand, $productVariant, $productPosition )
+    public function purchase($clientId, $transactionId, $affiliation, $revenue, $tax, $shipping, $coupon, $productId, $productName, $productCategory = [], $productBrand = [], $productVariant = [], $productPosition = [])
     {
         $eventData = [
             'v' => $this->version,
