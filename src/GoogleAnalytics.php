@@ -231,7 +231,6 @@ class GoogleAnalytics
                 ]
             );
         } Catch( \Exception $e ) {
-            echo $e->getMessage();
             return false;
         }
 
