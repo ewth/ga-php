@@ -13,7 +13,6 @@ class GoogleAnalytics
 
     private $baseUri = 'https://www.google-analytics.com/';
     private $version = '1';
-    private $userAgentString = 'PHP';
     private $batchLimit = 20;
 
     private $trackingId;
@@ -29,7 +28,7 @@ class GoogleAnalytics
     }
 
     /**
-     * Construct an event and add it to the events array
+     * Track an event
      *
      * @param string $clientId
      * @param string $category
@@ -40,14 +39,137 @@ class GoogleAnalytics
     public function event($clientId, $category, $action, $label = null, $value = null)
     {
         $eventData = [
-            'v' => urlencode($this->version),
-            'tid' => urlencode($this->trackingId),
-            'cid' => urlencode($clientId),
-            't' => urlencode('event'),
-            'ec' => urlencode($category),
-            'ea' => urlencode($action),
-            'el' => urlencode($label),
-            'ev' => urlencode($value)
+            'v' => $this->version,
+            'tid' => $this->trackingId,
+            'cid' => $clientId,
+            't' => 'event',
+            'ec' => $category,
+            'ea' => $action,
+            'el' => $label,
+            'ev' => $value
+        ];
+        $this->events[] = $eventData;
+    }
+
+    /**
+     * Track a purchase
+     *
+     * @param string $clientId
+     * @param string $transactionId
+     * @param string $affiliation
+     * @param float $revenue
+     * @param float $tax
+     * @param float $shipping
+     * @param string $coupon
+     * @param array $productId
+     * @param array $productName
+     * @param array $productCategory
+     * @param array $productBrand
+     * @param array $productVariant
+     * @param array $productPosition
+     */
+    public function purchase($clientId, $transactionId, $affiliation, $revenue, $tax, $shipping, $coupon, $productId, $productName, $productCategory, $productBrand, $productVariant, $productPosition )
+    {
+        $eventData = [
+            'v' => $this->version,
+            'tid' => $this->trackingId,
+            'cid' => $clientId,
+            't' => 'event',
+            'ti' => $transactionId,
+            'ta' => $affiliation,
+            'tr' => $revenue,
+            'tt' => $tax,
+            'ts' => $shipping,
+            'tcc' => $coupon,
+            'pa' => 'purchase'
+        ];
+
+        // Turn everything into an array if not already. Shouldn't be necessary but...
+        $productId = is_array($productId) ? $productId : [$productId];
+        $productName = is_array($productName) ? $productName : [$productName];
+        $productCategory = is_array($productCategory) ? $productCategory : [$productCategory];
+        $productBrand = is_array($productBrand) ? $productBrand : [$productBrand];
+        $productVariant = is_array($productVariant) ? $productVariant : [$productVariant];
+        $productPosition = is_array($productPosition) ? $productPosition : [$productPosition];
+
+        // Build product array(s), add to data
+        foreach( $productId as $key => $item ) {
+            $index = $key + 1;
+            $product = [
+                'pr' . $index . 'id' => $item,
+                'pr' . $index . 'nm' => empty($productName[$key]) ? null : $productName[$key],
+                'pr' . $index . 'ca' => empty($productCategory[$key]) ? null : $productCategory[$key],
+                'pr' . $index . 'br' => empty($productBrand[$key]) ? null : $productBrand[$key],
+                'pr' . $index . 'va' => empty($productVariant[$key]) ? null : $productVariant[$key],
+                'pr' . $index . 'ps' => empty($productPosition[$key]) ? null : $productPosition[$key],
+            ];
+            $eventData = array_merge($eventData, $product);
+        }
+        $this->events[] = $eventData;
+    }
+
+    /**
+     * Track a refund
+     *
+     * @param string $clientId
+     * @param string $transactionId
+     * @param string $affiliation
+     * @param float $revenue
+     * @param float $tax
+     * @param float $shipping
+     * @param string $coupon
+     * @param array $productId
+     * @param array $productName
+     * @param array $productCategory
+     * @param array $productBrand
+     * @param array $productVariant
+     * @param array $productPosition
+     */
+    public function refund($clientId, $transactionId, $productId, $productQty )
+    {
+        $eventData = [
+            'v' => $this->version,
+            'tid' => $this->trackingId,
+            'cid' => $clientId,
+            't' => 'event',
+            'ti' => $transactionId,
+            'pa' => 'refund'
+        ];
+
+        // Turn everything into an array if not already. Shouldn't be necessary but...
+        $productId = is_array($productId) ? $productId : [$productId];
+        $productQty = is_array($productQty) ? $productQty : [$productQty];
+
+        // Build product array(s), add to data
+        foreach( $productId as $key => $item ) {
+            $index = $key + 1;
+            $product = [
+                'pr' . $index . 'id' => $item,
+                'pr' . $index . 'qt' => empty($productQty[$key]) ? null : $productQty[$key],
+            ];
+            $eventData = array_merge($eventData, $product);
+        }
+        $this->events[] = $eventData;
+    }
+
+    /**
+     * Track a page view
+     *
+     * @param $clientId
+     * @param $host
+     * @param $page
+     * @param $title
+     */
+    public function track($clientId, $host, $page, $title)
+    {
+        $eventData = [
+            'v' => $this->version,
+            'tid' => $this->trackingId,
+            'cid' => $clientId,
+            't' => 'pageview',
+            'dh' => $host,
+            'dp' => $page,
+            'dt' => $title
         ];
         $this->events[] = $eventData;
     }
@@ -62,10 +184,9 @@ class GoogleAnalytics
         if( empty($this->events) ) {
             return true;
         }
-        $events = [];
 
         if( count($this->events) <= $this->batchLimit ) {
-            return $this->request('batch', $events);
+            return $this->request('batch', $this->events);
         }
 
         $result = 0;
@@ -86,24 +207,33 @@ class GoogleAnalytics
      */
     private function request($path, $data)
     {
-        $client = new Client();
 
+        $client = new Client();
         $uri = $this->baseUri . $path;
+
+
+        // This is so we can batch series of items rather than one at a time.
+        $postBody = [];
+        foreach( $data as $item ) {
+            $postItem = [];
+            foreach( $item as $key => $value ) {
+                $postItem[] = $key . '=' . urlencode($value);
+            }
+            $postBody[] = implode('&', $postItem);
+
+        }
+        $postBody = implode("\r\n",$postBody);
 
         try {
             $request = $client->request('POST', $uri,
                 [
-                    'headers' => [
-                        'User-Agent' => $this->userAgentString
-                    ],
-                    'body' => implode("\r\n",$data)
+                    'body' => $postBody
                 ]
             );
         } Catch( \Exception $e ) {
+            echo $e->getMessage();
             return false;
         }
-
-        echo $request->getBody();
 
         return true;
 
@@ -111,6 +241,7 @@ class GoogleAnalytics
 
     public function __destruct()
     {
+        // On the way out, submit data
         $this->submit();
     }
 
