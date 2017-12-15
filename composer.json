@@ -1,0 +1,24 @@
+{
+    "name": "huebacca/ga-php",
+    "description": "Example of API with PHP.",
+    "license": "MIT",
+    "keywords": ["google","analytics","measurement","protocol"],
+    "authors": [
+        {
+            "name": "Ewan Thompson",
+            "email": "ewan@huebacca.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Huebacca\\GoogleAnalytics\\": "src"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.5"
+    }
+}
+
