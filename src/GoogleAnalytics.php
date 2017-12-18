@@ -1,6 +1,9 @@
 <?php namespace Huebacca\GoogleAnalytics;
 
 /**
+ * This is for sending data to Google Analytics via the Measurement Protocol.
+ * More details: https://developers.google.com/analytics/devguides/collection/protocol/v1/
+ *
  * Ewan Thompson
  * github.com/huebacca
  * December 2017
@@ -20,6 +23,7 @@ class GoogleAnalytics
 
     /**
      * GoogleAnalytics constructor.
+     *
      * @param string $trackingId
      */
     public function __construct($trackingId)
@@ -113,17 +117,8 @@ class GoogleAnalytics
      *
      * @param string $clientId
      * @param string $transactionId
-     * @param string $affiliation
-     * @param float $revenue
-     * @param float $tax
-     * @param float $shipping
-     * @param string $coupon
      * @param array $productId
-     * @param array $productName
-     * @param array $productCategory
-     * @param array $productBrand
-     * @param array $productVariant
-     * @param array $productPosition
+     * @param array $productQty
      */
     public function refund($clientId, $transactionId, $productId, $productQty )
     {
@@ -207,7 +202,6 @@ class GoogleAnalytics
         $client = new Client();
         $uri = $this->baseUri . $path;
 
-
         // This is so we can batch series of items rather than one at a time.
         $postBody = [];
         foreach( $data as $item ) {
@@ -230,6 +224,7 @@ class GoogleAnalytics
             return false;
         }
 
+        // Google doesn't return any meaningful data; so boolean response it is
         return true;
 
     }
