@@ -185,10 +185,6 @@ class GoogleAnalytics
             return true;
         }
 
-        if( count($this->events) <= $this->batchLimit ) {
-            return $this->request('batch', $this->events);
-        }
-
         $result = 0;
         while( count($this->events) > 0 ) {
             $events = array_splice($this->events, 0, $this->batchLimit);
